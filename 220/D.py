@@ -1,46 +1,44 @@
-from collections import deque
-import copy
-"""
-動的計画法的な解き方でなかった。
-例えば、動的計画法の考え方だと、
-「FG..」と「GF..」の処理が行われた場合、同じになるはずだ。
-table[1][1]には、table[0][1]とtable[1][0]から行くことができるが、
-でそれぞれの処理結果が異なってしまう。
-
-# table[0][0] = [2,7,6] の場合を考える！
-・table[0][1]→table[1][1] ex) [9,6] -> [4]
-・table[1][0]→table[1][1] ex) [4,6] -> [0]
-
-よって、動的計画法での解答は通用しない。
-"""
 
 N = int(input())
-A_list = [int(key) for key in input().split()]
+A_list = [0]
+A_list.extend([int(key) for key in input().split()])
 
-table = {}
-table[(0,0)] = A_list
-tmp = deque(A_list)
+dp = [[0 for _ in range(10)] for _ in range(N+1)]#<---pay attention
+dp[1][A_list[1]] = 1
+"""
+dp = [[0 for key in range(10)]]*(N+1)の書き方は厳禁である！
+同じ配列をN+1個用意する多次元配列なわけだが、同じ配列が「完全に同じ配列」な点が問題だ。
 
-for j in range(1,N+1):
-    x = tmp.popleft()
-    y = tmp.popleft()
-    tmp.appendleft((x+y)%10)
-    table[(0,j)] = list(tmp)
-    if len(tmp) == 1:
-        break
+「完全に同じ」とは、N+1個の要素全てが同じアドレスを保有しているため、
+ある要素を書き換えると、同じ要素番号の配列全てが書き換わる！
 
-tmp = deque(A_list)
-for i in range(1,N+1):
-    x = tmp.popleft()
-    y = tmp.popleft()
-    tmp.appendleft((x*y)%10)
-    table[(i,0)] = list(tmp)
-    if len(tmp) == 1:
-        break
+3*3行列のゼロ行列の例だと、
+0 0 0 　0行1列目を1に変更　　0 1 0 　　　　　本当は、　0 1 0
+0 0 0  →→→→→→→→→→→→→→→→→　0 1 0　　　　　　　　　　 0 0 0
+0 0 0 　　　　　　　　　　　　0 1 0 となる。          0 0 0 になってほしいはずだ。
 
-#for key in table.keys():
-#    print(str(key)+" "+str(table[key]))
+以上から、
+　最上位の掛け算を利用した多次元配列の表記手法は禁止とする！
 
-for i in range(1,N+1):
-    for j in range(1,N+1):
-        table[(i,j)] =
+"""
+
+for i in range(1, N):
+    for j in range(10):
+        dp[i+1][(j+A_list[i+1])%10] += dp[i][j]%998244353
+        dp[i+1][(j*A_list[i+1])%10] += dp[i][j]%998244353
+
+for key in dp[N]:
+    print(key%998244353)
+
+
+"""
+動的計画法によって解く。
+ただし、テスト中に考えついたテーブルの横移動をF処理、縦移動をG処理として
+処理の途中経過を保有させることで、計算量を落とすやり方では解けない。
+
+動的計画法で解けそうな場合は、キーが何かを集中して考える必要があった。
+今回の場合、iは処理回数である。        ※0<=i<=N
+次にjは処理結果を10で割った余りである。 ※0<=j<=9
+
+よって、i番目の処理において計算結果がjになる回数を動的計画法にて求める必要があった。
+"""
